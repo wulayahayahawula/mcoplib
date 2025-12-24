@@ -1,4 +1,3 @@
-// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights Reserved.
 #include "core/registration.h"
 #include "moe_ops.h"
 
@@ -23,6 +22,33 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, m) {
       "                     Tensor! num_tokens_post_pad) -> ()");
   m.impl("moe_align_block_size", torch::kCUDA, &moe_align_block_size);
 
+   // Aligning the number of tokens to be processed by each expert such
+  // that it is divisible by the block size, but for the batched case.
+  m.def(
+      "batched_moe_align_block_size(int max_tokens_per_batch,"
+      "                     int block_size, Tensor expert_num_tokens,"
+      "                     Tensor! sorted_token_ids,"
+      "                     Tensor! experts_ids,"
+      "                     Tensor! num_tokens_post_pad) -> ()");
+  m.impl("batched_moe_align_block_size", torch::kCUDA,
+         &batched_moe_align_block_size);
+
+  // Aligning the number of tokens to be processed by each expert such
+  // that it is divisible by the block size.
+  m.def(
+      "moe_lora_align_block_size(Tensor topk_ids,"
+      "                     Tensor token_lora_mapping,"
+      "                     int num_experts,"
+      "                     int block_size, int max_loras, "
+      "                     int max_num_tokens_padded, "
+      "                     int max_num_m_blocks, "
+      "                     Tensor !sorted_token_ids,"
+      "                     Tensor !experts_ids,"
+      "                     Tensor !num_tokens_post_pad,"
+      "                     Tensor !adapter_enabled,"
+      "                     Tensor !lora_ids) -> () ");
+  m.impl("moe_lora_align_block_size", torch::kCUDA, &moe_lora_align_block_size);
+  
   m.def(
       "moe_permute(Tensor input, Tensor topk_ids,"
       "Tensor token_expert_indices, Tensor? expert_map, int n_expert,"

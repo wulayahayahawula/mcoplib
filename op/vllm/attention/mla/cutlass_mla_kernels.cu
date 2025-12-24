@@ -1,5 +1,6 @@
-// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights Reserved.
 /*
+ * Copyright (c) 2025, NVIDIA CORPORATION.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -121,6 +122,7 @@ typename T::Fmha::Arguments args_from_options(
       1,        // split_kv
       nullptr,  // is_var_split_kv
   };
+  // TODO(kaixih@nvidia): When split_kv=-1 and is_var_split_kv=false, we compute
   // split_kv automatically based on batch size and sequence length to balance
   // workload across available SMs. Consider using var_split_kv for manual
   // control if needed.

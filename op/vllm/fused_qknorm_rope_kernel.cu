@@ -1,5 +1,6 @@
-// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights Reserved.
 /*
+ * Copyright (c) 2025, NVIDIA CORPORATION.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -87,6 +88,7 @@ inline __device__ __host__ T divUp(T m, T n) {
 namespace tensorrt_llm::kernels {
 // NOTE(zhuhaoran): This kernel is adapted from TensorRT-LLM implementation,
 // with added support for passing the cos_sin_cache as an input.
+// https://github.com/NVIDIA/TensorRT-LLM/blob/main/cpp/tensorrt_llm/kernels/fusedQKNormRopeKernel.cu
 
 // Perform per-head QK Norm and RoPE in a single kernel.
 // scalar_t_in: data type of QKV and RMSNorm weights

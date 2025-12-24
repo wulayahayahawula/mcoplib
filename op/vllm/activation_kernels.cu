@@ -1,4 +1,4 @@
-// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights Reserved.
+// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights
 // Reserved.
 #include <ATen/cuda/CUDAContext.h>
 #include <torch/all.h>
@@ -97,76 +97,45 @@ __global__ void act_and_mul_kernel_sd_opt(
   }
 }
 
-// template <typename scalar_t, typename VT, int N,
-//           scalar_t (*ACT_FN)(const scalar_t&),
-//           bool act_first>
-// __global__ void act_and_mul_kernel_sd_fast_opt(
-//     scalar_t* __restrict__ out,          // [..., d]
-//     const scalar_t* __restrict__ input,  // [..., 2, d]
-//     const int d, const int blockDim_x, const int gridDim_x,
-//     const int token_per_block, const int max_token_num) {
-//   __shared__ int8_t sm_buffer[16384];
-//   int token_offset = blockIdx.x * token_per_block;
-//   int out_offset = token_offset * d;
-//   int in_offset = out_offset << 1;
-//   int num_token = min(max_token_num - token_offset, token_per_block);
-//   if (num_token <= 0) return;
-//   const scalar_t* ptr_block_input = input + in_offset;
-//   scalar_t* ptr_block_output = out + out_offset;
-//   int output_size = num_token * d;
-//   int input_size = output_size << 1;
-
-//   scalar_t* ptr_sm_buffer = (scalar_t*)sm_buffer;
-//   int stride = blockDim_x * N;
-//   for (int i = threadIdx.x * N; i < input_size; i += stride) {
-//     *(VT*)(ptr_sm_buffer + i) = *(VT*)(ptr_block_input + i);
-//   }
-//   __syncthreads();
-//   for (int i = threadIdx.x * N; i < output_size; i += stride) {
-//     int token_id = i / d;
-//     int x_offset = i % d;
-//     scalar_t* ptr_input0 = ptr_sm_buffer + token_id * d * 2 + x_offset;
-//     scalar_t* ptr_input1 = ptr_input0 + d;
-//     VT vdst;
-//     scalar_t* ptr_dst = (scalar_t*)&vdst;
-// #pragma unroll N
-//     for (int j = 0; j < N; j++) {
-//       ptr_dst[j] =
-//           compute<scalar_t, ACT_FN, act_first>(ptr_input0[j], ptr_input1[j]);
-//     }
-//     *(VT*)(ptr_block_output + i) = vdst;
-//   }
-// }
-
-template<typename scalar_t, typename VT, int N, scalar_t (*ACT_FN)(const scalar_t&), bool act_first>
+template <typename scalar_t, typename VT, int N,
+          scalar_t (*ACT_FN)(const scalar_t&),
+          bool act_first>
 __global__ void act_and_mul_kernel_sd_fast_opt(
-  scalar_t* __restrict__ out,               // [..., d]
-  const scalar_t* __restrict__ input,       // [..., 2, d]
-  const int d,
-  const int max_token_num  
-) {
-    int num_elems = d * max_token_num;
-    int index = (blockIdx.x * blockDim.x + threadIdx.x) * N;
-    if(index >= num_elems) return;
-    scalar_t* ptr_output = out + index;
-    int token_id = index / d;
-    int d_id = index % d;
-    int stride = d * 2;
-    const scalar_t* ptr_input0 = input + token_id * stride + d_id;
-    const scalar_t* ptr_input1 = ptr_input0 + d;
+    scalar_t* __restrict__ out,          // [..., d]
+    const scalar_t* __restrict__ input,  // [..., 2, d]
+    const int d, const int blockDim_x, const int gridDim_x,
+    const int token_per_block, const int max_token_num) {
+  __shared__ int8_t sm_buffer[16384];
+  int token_offset = blockIdx.x * token_per_block;
+  int out_offset = token_offset * d;
+  int in_offset = out_offset << 1;
+  int num_token = min(max_token_num - token_offset, token_per_block);
+  if (num_token <= 0) return;
+  const scalar_t* ptr_block_input = input + in_offset;
+  scalar_t* ptr_block_output = out + out_offset;
+  int output_size = num_token * d;
+  int input_size = output_size << 1;
 
-    VT src0, src1;
+  scalar_t* ptr_sm_buffer = (scalar_t*)sm_buffer;
+  int stride = blockDim_x * N;
+  for (int i = threadIdx.x * N; i < input_size; i += stride) {
+    *(VT*)(ptr_sm_buffer + i) = *(VT*)(ptr_block_input + i);
+  }
+  __syncthreads();
+  for (int i = threadIdx.x * N; i < output_size; i += stride) {
+    int token_id = i / d;
+    int x_offset = i % d;
+    scalar_t* ptr_input0 = ptr_sm_buffer + token_id * d * 2 + x_offset;
+    scalar_t* ptr_input1 = ptr_input0 + d;
     VT vdst;
-    src0 = *(VT*)(ptr_input0);
-    src1 = *(VT*)(ptr_input1);
-    scalar_t* ptr_src0 = (scalar_t*)&src0;
-    scalar_t* ptr_src1 = (scalar_t*)&src1;
-    scalar_t *ptr_dst = (scalar_t*)&vdst;
-    #pragma unroll N
-    for(int i = 0; i < N; i++) {
-        ptr_dst[i] = compute<scalar_t, ACT_FN, act_first>(ptr_src0[i], ptr_src1[i]);
+    scalar_t* ptr_dst = (scalar_t*)&vdst;
+#pragma unroll N
+    for (int j = 0; j < N; j++) {
+      ptr_dst[j] =
+          compute<scalar_t, ACT_FN, act_first>(ptr_input0[j], ptr_input1[j]);
     }
-    *(VT*)(ptr_output) = vdst;
+    *(VT*)(ptr_block_output + i) = vdst;
+  }
 }
 
 template <typename T>
@@ -223,9 +192,11 @@ __device__ __forceinline__ T gelu_tanh_kernel(const T& x) {
                                                    input.data_ptr<scalar_t>(), \
                                                    d, blocksize);              \
         });                                                                    \
-  } else if ((d & (n - 1)) == 0) {                                  \
+  } else if (d < 512 && (d & (n - 1)) == 0) {                                  \
+    int block_token = 16384 / input.element_size() / 2 / d;                    \
+    block_token = block_token / n * n;                                         \
     int blocksize = 512;                                                       \
-    int gridsize = (num_tokens * d + blocksize * n - 1) / (blocksize * n);     \
+    int gridsize = (num_tokens + block_token - 1) / block_token;               \
     const at::cuda::OptionalCUDAGuard device_guard(device_of(input));          \
     const cudaStream_t stream = at::cuda::getCurrentCUDAStream();              \
     VLLM_DISPATCH_FLOATING_TYPES(                                              \
@@ -235,7 +206,7 @@ __device__ __forceinline__ T gelu_tanh_kernel(const T& x) {
                                                KERNEL<scalar_t>, ACT_FIRST>    \
               <<<gridsize, blocksize, 0, stream>>>(                            \
                   out.data_ptr<scalar_t>(), input.data_ptr<scalar_t>(), d,     \
-                  num_tokens);                                                 \
+                  blocksize, gridsize, block_token, num_tokens);               \
         });                                                                    \
   } else if (d < 512) {                                                        \
     int block_token = 16384 / input.element_size() / 2 / d;                    \

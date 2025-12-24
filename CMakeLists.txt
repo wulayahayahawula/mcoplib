@@ -342,6 +342,7 @@ if (BUILD_VLLM_SUBMODULE)
   set(VLLM_MOE_EXT_SRC
     "${VLLM_SRC_DIR}/moe/torch_bindings.cpp"
     "${VLLM_SRC_DIR}/moe/moe_align_sum_kernels.cu"
+    "${VLLM_SRC_DIR}/moe/moe_lora_align_sum_kernels.cu"
     "${VLLM_SRC_DIR}/moe/topk_softmax_kernels.cu")
 
   if (USE_MACA AND ENABLE_BLAS_API)

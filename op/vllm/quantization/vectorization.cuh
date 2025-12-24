@@ -1,9 +1,9 @@
-// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights Reserved.
 #pragma once
 /**
  * __device__ datatypes vectorized by 4
  */
 
+// Include both AMD and NVIDIA fp8 types to avoid circular import
 #include <c10/util/Float8_e4m3fnuz.h>
 #include <c10/util/Float8_e4m3fn.h>
 

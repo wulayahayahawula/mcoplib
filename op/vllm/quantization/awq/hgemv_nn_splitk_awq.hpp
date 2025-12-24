@@ -1,9 +1,10 @@
-// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights Reserved.
 /**
  * @file hgemv_nn_splitk.hpp
+ * @author Jiawen Yang (jiawen.yang@metax-tech.com)
  * @brief *
  * @version 0.1
  * @date 2024-03-05
+ * @copyright Copyright (c) 2024
  *
  *   fp16 gemv kernel template for some gemv cases
  *   Note:

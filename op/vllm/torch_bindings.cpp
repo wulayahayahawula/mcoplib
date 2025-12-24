@@ -1,4 +1,3 @@
-// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights Reserved.
 #include "cache.h"
 #include "cuda_utils.h"
 #include "ops.h"
@@ -439,7 +438,8 @@ TORCH_LIBRARY_EXPAND(CONCAT(TORCH_EXTENSION_NAME, _cache_ops), cache_ops) {
   cache_ops.def(
       "gather_and_maybe_dequant_cache(Tensor src_cache, Tensor! dst, "
       "                               Tensor block_table, Tensor cu_seq_lens, "
-      "                               int batch_size, "
+      "                               Tensor token_to_seq, "
+      "                               int num_tokens, "
       "                               str kv_cache_dtype, "
       "                               Tensor scale, Tensor? seq_starts) -> ()");
   cache_ops.impl("gather_and_maybe_dequant_cache", torch::kCUDA,

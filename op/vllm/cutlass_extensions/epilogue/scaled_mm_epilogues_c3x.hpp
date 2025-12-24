@@ -1,4 +1,3 @@
-// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights Reserved.
 #pragma once
 
 #include "cutlass_extensions/epilogue/broadcast_load_epilogue_c3x.hpp"
@@ -7,7 +6,7 @@
 /*
    This file defines custom epilogues for fusing channel scales, token scales,
    bias, and activation zero-points onto a GEMM operation using the
-   CUTLASS 3.x API.
+   CUTLASS 3.x API, for NVIDIA GPUs with sm90a (Hopper) or later.
 
    Epilogues must contain a public type named EVTCompute of type Sm90EVT,
    as well as a static prepare_args function that constructs an

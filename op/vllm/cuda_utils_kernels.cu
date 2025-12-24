@@ -1,4 +1,3 @@
-// 2025 - Modified by MetaX Integrated Circuits (Shanghai) Co., Ltd. All Rights Reserved.
 #include "cuda_utils.h"
 
 int64_t get_device_attribute(int64_t attribute, int64_t device_id) {
@@ -19,6 +18,7 @@ int64_t get_device_attribute(int64_t attribute, int64_t device_id) {
 
 int64_t get_max_shared_memory_per_block_device_attribute(int64_t device_id) {
   int64_t attribute;
+  // https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html
   // cudaDevAttrMaxSharedMemoryPerBlockOptin = 97 if not is_hip() else 74
 
   attribute = cudaDevAttrMaxSharedMemoryPerBlockOptin;
