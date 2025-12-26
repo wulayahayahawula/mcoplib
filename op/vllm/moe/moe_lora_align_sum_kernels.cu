@@ -142,8 +142,8 @@ void moe_lora_align_block_size(
                          cudaDevAttrMaxSharedMemoryPerBlockOptin, dev);
   const cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
-  const int32_t num_thread = max((int32_t)num_experts, 128);  // WARP_SIZE,
-  TORCH_CHECK(num_thread <= 1024,
+  const int32_t num_thread = min((int32_t)num_experts, 64);  // WARP_SIZE,
+  TORCH_CHECK(num_thread <= 128,
               "num_thread must be less than 1024, "
               "and fallback is not implemented yet.");
   const int32_t shared_mem = (num_thread + 1) * num_experts * sizeof(int32_t) +
