@@ -41,13 +41,25 @@ mkdir build
 #cmd 
 cmake_maca -DCMAKE_CXX_STANDARD=17 -DCMAKE_CUDA_STANDARD=17 -DCMAKE_CUDA_ARCHITECTURES=80   -DCMAKE_CUDA_FLAGS="-Xcompiler=-std=gnu++17 " -DCMAKE_CXX_FLAGS="-Wno-unused-parameter  -Wno-error  -Wno-implicit-float-conversion "  .. &&make_maca VERBOSE=1
 ```
-## run
+## C/C++ Op Kernel API bench test
 ```shell
 cd  /code/dir/build
 ./softmax_benchmark  --throttle-threshold 0
 
 ```
 note: 运行时的时候 请设置参数：--throttle-threshold 0， 不然会导致 GPU运行频率远低于预期，触发了MXBench的节流检测机制
+
+## Python Op Kernel API bench test
+
+### 打包mxbench whl包
+```shell
+#编译
+cd /code/to/mcoplib/python
+#设置mxbench 安装目录环境变量
+export NVBENCH_INSTALL_PATH='/code/to/path/mxbench/install'
+#执行：
+python setup.py develop
+```
 
 # Supported Compilers and Tools
 

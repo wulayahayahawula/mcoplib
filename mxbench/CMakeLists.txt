@@ -82,7 +82,7 @@ set(mxbench_ops
 add_custom_target(mxbench.ops.all)
 
 set(MXBENCH_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
-set(MXBENCH_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/)
+set(MXBENCH_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/install/lib/)
 
 
 function (mxbench_add_examples_target target_prefix)
