@@ -31,7 +31,7 @@ features:
 Check out [this talk](https://www.youtube.com/watch?v=CtrqBmYtSEk) for an overview
 of the challenges inherent to CUDA kernel benchmarking and how NVBench solves them for you!
 
-## compiler
+## C/C++ API Benchmark Compiler
 ```shell
 #setting env
 cd /code/path/dir/mcoplib/mxbench
@@ -59,8 +59,11 @@ cd /code/to/mcoplib/python
 source env.sh
 #设置mxbench 安装目录环境变量
 export NVBENCH_INSTALL_PATH='/code/to/path/mxbench/install'
-#执行：
+#两种方式安装mxbench
+#1. 开发者模式安装 执行：
 python setup.py develop
+#2. whl 打包
+python setup.py bdist_wheel
 #安装whl 包
 pip3 install ./dist/*.whl
 ```
