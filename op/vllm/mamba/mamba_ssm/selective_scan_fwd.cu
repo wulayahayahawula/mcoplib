@@ -645,4 +645,3 @@ void selective_scan_fwd(const torch::Tensor &u, const torch::Tensor &delta,
         selective_scan_fwd_cuda<input_t, weight_t>(params, stream);
     });
 }
-

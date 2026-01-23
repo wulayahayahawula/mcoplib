@@ -214,6 +214,7 @@ if (BUILD_VLLM_SUBMODULE)
   set(VLLM_EXT_SRC
     "${VLLM_SRC_DIR}/mamba/mamba_ssm/selective_scan_fwd.cu"
     "${VLLM_SRC_DIR}/cache_kernels.cu"
+    "${VLLM_SRC_DIR}/cache_kernels_fused.cu"
     "${VLLM_SRC_DIR}/attention/paged_attention_v1.cu"
     "${VLLM_SRC_DIR}/attention/paged_attention_v2.cu"
     "${VLLM_SRC_DIR}/attention/merge_attn_states.cu"
@@ -366,11 +367,12 @@ if (BUILD_VLLM_SUBMODULE)
   set(VLLM_MOE_EXT_SRC
     "${VLLM_SRC_DIR}/moe/torch_bindings.cpp"
     "${VLLM_SRC_DIR}/moe/moe_align_sum_kernels.cu"
-    "${VLLM_SRC_DIR}/moe/moe_lora_align_sum_kernels.cu"
-    "${VLLM_SRC_DIR}/moe/topk_softmax_kernels.cu")
+    #"${VLLM_SRC_DIR}/moe/moe_lora_align_sum_kernels.cu"
+    "${VLLM_SRC_DIR}/moe/topk_softmax_kernels.cu"
+    "${VLLM_SRC_DIR}/moe/grouped_topk_kernels.cu")
 
   if (USE_MACA AND ENABLE_BLAS_API)
-    list(APPEND VLLM_MOE_EXT_SRC "${VLLM_SRC_DIR}/moe/moe_ops.cpp")
+    #list(APPEND VLLM_MOE_EXT_SRC "${VLLM_SRC_DIR}/moe/moe_ops.cpp")
 
     set(MCBLAS_INCLUDE_DIR $ENV{MACA_PATH}/include/mcblas)
     set(MCBLAS_LIB $ENV{MACA_PATH}/lib/libmcblas.so)

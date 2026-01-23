@@ -74,13 +74,21 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, m) {
   m.impl("shuffle_rows", torch::kCUDA, &shuffle_rows);
 
   // Fused moe in mcblas
+//   m.def(
+//       "fused_moe_kernel(Tensor! A, Tensor! B, Tensor! C,"
+//       "Tensor! topk_weights, Tensor! topk_ids,"
+//       "Tensor! sorted_token_ids, Tensor! expert_ids,"
+//       "Tensor! num_tokens_post_padded, bool mul_routed_weight, int top_k, int "
+//       "tileConfig) -> ()");
+//   m.impl("fused_moe_kernel", torch::kCUDA, &fused_moe_kernel);
+  
+  // Apply grouped topk routing to select experts.
   m.def(
-      "fused_moe_kernel(Tensor! A, Tensor! B, Tensor! C,"
-      "Tensor! topk_weights, Tensor! topk_ids,"
-      "Tensor! sorted_token_ids, Tensor! expert_ids,"
-      "Tensor! num_tokens_post_padded, bool mul_routed_weight, int top_k, int "
-      "tileConfig) -> ()");
-  m.impl("fused_moe_kernel", torch::kCUDA, &fused_moe_kernel);
+      "grouped_topk(Tensor scores, int n_group, int "
+      "topk_group, int topk, bool renormalize, float "
+      "routed_scaling_factor, Tensor bias, int scoring_func) -> (Tensor, "
+      "Tensor)");
+  m.impl("grouped_topk", torch::kCUDA, &grouped_topk);
 }
 
 REGISTER_EXTENSION(TORCH_EXTENSION_NAME)

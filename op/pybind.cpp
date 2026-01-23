@@ -25,7 +25,7 @@
 #include "../include/rms_norm_dynamic_per_token_quant.h"
 #include "../include/fused_moe_gate_deepseek.h"
 #include "gptq_marlin.h"
-#include "fuse_moe_gate_opt.h"
+#include "fused_moe_gate_opt.h"
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.def("fused_bias_dropout", &fused_bias_dropout);
