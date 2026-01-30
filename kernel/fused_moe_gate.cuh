@@ -257,11 +257,18 @@ template<class scalar_t>
         int wave_idx = tid / WAVE_SIZE;
         scalar_t idx_and_weight[2]; //Stores weight and index for further top1
 
-        float fw = scalar2float<scalar_t>(w[tid]);
-        scalar_t fw_sim = float2scalar<scalar_t>(__builtin_rcpf((1.0f + __expf(-fw))));
-        scalar_t fw_bf16 = fw_sim + bias[tid];
-        idx_and_weight[0] = fw_bf16;
-        global_score[tid] = fw_sim;
+        if (tid < NUM_EXPERTS) {
+            float fw = scalar2float<scalar_t>(w[tid]);
+            scalar_t fw_sim = float2scalar<scalar_t>(__builtin_rcpf((1.0f + __expf(-fw))));
+            scalar_t fw_bf16 = fw_sim + bias[tid];
+            idx_and_weight[0] = fw_bf16;
+            global_score[tid] = fw_sim; // 只有有效线程才能写入 Shared Memory
+        } else {
+            // 对于补齐的虚拟线程，赋予极小值，确保排序后在最后面
+            idx_and_weight[0] = -INFINITY; // -inf
+            // global_score 不需要写，因为 Phase 2 只会读取 TopK 的索引
+        }
+
         if constexpr (std::is_same_v<scalar_t, at::BFloat16> || std::is_same_v<scalar_t, at::Half>)
         {
             idx_and_weight[1] = float2scalar<scalar_t>(0.0f);
@@ -280,24 +287,26 @@ template<class scalar_t>
         if (wave_lane < TOPK) {
             if constexpr (std::is_same_v<scalar_t, float>) {
                 max_cache[offset][0] = idx_and_weight[0];
-                *((uint32_t*)&max_cache[offset][1]) = *((uint32_t*)&idx_and_weight[1]);
+                *((uint32_t *)&max_cache[offset][1]) = *((uint32_t *)&idx_and_weight[1]);
             }
-            else
+            else {
                 ((float*)(max_cache))[offset] = *(float*)idx_and_weight;
+            }
         }
-        // 使用天花板除法计算实际wave数量
+
         // 对于160专家: (160+64-1)/64 = 3, 3*8 = 24
         constexpr int num_waves = (NUM_EXPERTS + WAVE_SIZE - 1) / WAVE_SIZE;
         constexpr int topks_in_block = num_waves * TOPK;
         // must use small value to fill max_cache[topks_in_block~63]
         if (wave_idx == 0 && wave_lane >= topks_in_block) {
             if constexpr (std::is_same_v<scalar_t, float>) {
-                max_cache[wave_lane][0] = 0.f;
+                max_cache[wave_lane][0] = -INFINITY;
                 *((uint32_t*)&max_cache[wave_lane][1]) = tid;
             }
             else
                 ((float*)(max_cache))[wave_lane] = *(float*)idx_and_weight;
         }
+
         __syncthreads();
 
         //We get NUM_EXPERTS/WAVE_SIZE*TOPK experts&weights
@@ -312,12 +321,13 @@ template<class scalar_t>
                 *(float*)idx_and_weight = ((float*)(max_cache))[wave_lane];
             __syncthreads();
             warpSortDescending<scalar_t, 64, 0xffffffffffffffff>(idx_and_weight, tid);
-            //Now all values are stored into shared_max_experts
+            //Now all values are stored into shared max_experts
             if constexpr (std::is_same_v<scalar_t, float>)
                 top_k_idx = *((int32_t*)&idx_and_weight[1]);
             else
                 top_k_idx = ((int32_t*)idx_and_weight)[tid] >> 16;
         }
+
         return top_k_idx;
     }
 
